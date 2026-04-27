@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#f4511e" />
+  <meta name="theme-color" content="#ffffff" />
   <title>Zip - Ruta Total</title>
   <style>
     :root {
@@ -506,71 +506,284 @@
         border-radius: 12px;
       }
     }
+
+    :root {
+      color-scheme: light;
+      --bg: #ffffff;
+      --orange: #f4511e;
+      --orange-deep: #dd3d10;
+      --cream: #fff7ed;
+      --paper: #ffffff;
+      --text: #211914;
+      --ink: #211914;
+      --muted: #6f625c;
+      --soft: #8b756b;
+      --line: rgba(33, 25, 20, 0.12);
+      --cell: #f7f3ee;
+      --cell-hover: #f1e9df;
+      --cell-active: transparent;
+      --shadow: 0 18px 50px rgba(33, 25, 20, 0.12);
+    }
+
+    html,
+    body {
+      background: #ffffff;
+      color: var(--ink);
+    }
+
+    body {
+      align-items: stretch;
+      padding: max(18px, env(safe-area-inset-top)) 18px max(18px, env(safe-area-inset-bottom));
+    }
+
+    body::before {
+      display: none;
+    }
+
+    [hidden] {
+      display: none !important;
+    }
+
+    .app {
+      width: min(calc(100vw - 36px), 440px);
+      min-height: calc(100dvh - 36px);
+      display: grid;
+      place-items: center;
+    }
+
+    .screen {
+      width: 100%;
+    }
+
+    .home-screen {
+      min-height: calc(100dvh - 36px);
+      display: grid;
+      align-content: center;
+      gap: 26px;
+    }
+
+    .home-card {
+      width: 100%;
+      max-width: 340px;
+      margin: 0 auto;
+      border: 1px solid rgba(33, 25, 20, 0.08);
+      border-radius: 28px;
+      background: #ffffff;
+      box-shadow: var(--shadow);
+      padding: 28px 22px 22px;
+      text-align: center;
+    }
+
+    .home-card .zip-mark {
+      width: 86px;
+      height: 86px;
+      margin-bottom: 18px;
+      background: var(--orange);
+      box-shadow: 0 16px 34px rgba(244, 81, 30, 0.22);
+    }
+
+    .home-card .zip-mark::before {
+      border-color: #ffffff;
+    }
+
+    .home-card .zip-mark::after {
+      background: var(--orange);
+      box-shadow:
+        -31px -21px 0 var(--orange),
+        -31px -21px 0 5px #ffffff,
+        31px 21px 0 var(--orange),
+        31px 21px 0 5px #ffffff;
+    }
+
+    .home-title {
+      margin: 0;
+      color: var(--ink);
+      font-size: 54px;
+      line-height: 0.95;
+      font-weight: 950;
+    }
+
+    .home-copy {
+      width: min(100%, 320px);
+      margin: 12px auto 0;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.4;
+    }
+
+    .difficulty-group {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 24px;
+      padding: 5px;
+      border-radius: 999px;
+      background: #f7f3ee;
+    }
+
+    .difficulty-button {
+      min-width: 0;
+      min-height: 44px;
+      border: 0;
+      border-radius: 999px;
+      background: transparent;
+      color: var(--muted);
+      font-weight: 900;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background 150ms ease, color 150ms ease, box-shadow 150ms ease;
+    }
+
+    .difficulty-button.active {
+      background: #ffffff;
+      color: var(--orange-deep);
+      box-shadow: 0 8px 20px rgba(33, 25, 20, 0.12);
+    }
+
+    .play-button {
+      width: 100%;
+      min-height: 56px;
+      margin-top: 18px;
+      border: 0;
+      border-radius: 999px;
+      background: var(--orange);
+      color: #ffffff;
+      font-size: 18px;
+      font-weight: 950;
+      cursor: pointer;
+      box-shadow: 0 16px 28px rgba(244, 81, 30, 0.26);
+      transition: transform 140ms ease, background 150ms ease, box-shadow 150ms ease;
+    }
+
+    .play-button:active,
+    .difficulty-button:active {
+      transform: translateY(1px);
+    }
+
+    .game-screen {
+      min-height: calc(100dvh - 36px);
+      display: grid;
+      place-items: center;
+    }
+
+    .game-screen .board-panel {
+      width: 100%;
+      display: grid;
+      place-items: center;
+    }
+
+    .game-screen .board-wrap {
+      width: 100%;
+      padding: 0;
+    }
+
+    .game-screen .board {
+      position: relative;
+      width: min(100%, 354px);
+      grid-template-columns: repeat(var(--size), minmax(0, 1fr));
+      gap: 6px;
+      border: 0;
+      border-radius: 22px;
+      background: #ffffff;
+      padding: 8px;
+      box-shadow: none;
+      overflow: visible;
+    }
+
+    .path-layer {
+      position: absolute;
+      inset: 8px;
+      z-index: 1;
+      width: calc(100% - 16px);
+      height: calc(100% - 16px);
+      pointer-events: none;
+      overflow: visible;
+    }
+
+    .path-line {
+      fill: none;
+      stroke: var(--orange);
+      stroke-width: 18;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      filter: drop-shadow(0 3px 5px rgba(244, 81, 30, 0.18));
+    }
+
+    .cell {
+      z-index: 2;
+      border-color: #e8ddd3;
+      border-radius: 12px;
+      background: var(--cell);
+      color: var(--ink);
+      font-size: clamp(18px, 5vw, 24px);
+      box-shadow: none;
+    }
+
+    .cell:hover {
+      background: var(--cell-hover);
+    }
+
+    .cell.visited {
+      background: transparent;
+      color: transparent;
+      border-color: transparent;
+      box-shadow: none;
+    }
+
+    .cell.checkpoint,
+    .cell.checkpoint.visited {
+      color: var(--ink);
+      background: var(--cell);
+      border-color: #e8ddd3;
+    }
+
+    .cell.checkpoint.visited {
+      background: transparent;
+      border-color: transparent;
+    }
+
+    .cell.current {
+      outline: none;
+    }
+
+    .cell.hint {
+      background: #fff0d8;
+      color: var(--ink);
+      border-color: #ffd39b;
+      outline: 3px solid rgba(244, 81, 30, 0.18);
+    }
+
+    .cell .order,
+    .cell.visited:not(.checkpoint)::after {
+      display: none;
+    }
   </style>
 </head>
 <body>
   <div class="app" id="app">
-    <main class="panel board-panel" aria-labelledby="title">
-      <div class="topbar">
-        <div>
-          <div class="zip-mark" aria-hidden="true"></div>
-          <div class="badge">Juego lógico diario</div>
-          <h1 id="title">Zip</h1>
-          <p class="subtitle">Completa la ruta. Une los números en orden y llena toda la grilla.</p>
-        </div>
-        <div class="level-card">
-          <div class="eyebrow">Nivel</div>
-          <div class="level-name" id="levelName"></div>
-          <div class="level-difficulty" id="levelDifficulty"></div>
-        </div>
-      </div>
+    <section class="screen home-screen" id="homeScreen" aria-labelledby="homeTitle">
+      <div class="home-card">
+        <div class="zip-mark" aria-hidden="true"></div>
+        <h1 class="home-title" id="homeTitle">Zip</h1>
+        <p class="home-copy">Elige una dificultad y dibuja una sola ruta para completar toda la grilla.</p>
 
-      <section class="board-wrap" aria-label="Tablero de Ruta Total">
-        <div class="board" id="board"></div>
-      </section>
-    </main>
+        <div class="difficulty-group" aria-label="Dificultad">
+          <button class="difficulty-button active" type="button" data-difficulty="Fácil">Fácil</button>
+          <button class="difficulty-button" type="button" data-difficulty="Medio">Medio</button>
+          <button class="difficulty-button" type="button" data-difficulty="Difícil">Difícil</button>
+        </div>
 
-    <aside class="panel side-panel" aria-label="Panel de estado">
-      <div class="status-card">
-        <div class="status-icon" id="statusIcon" aria-hidden="true">!</div>
-        <div>
-          <div class="eyebrow">Estado</div>
-          <p class="message" id="message" aria-live="polite"></p>
-        </div>
+        <button class="play-button" id="playButton" type="button">Jugar</button>
       </div>
+    </section>
 
-      <div class="metrics">
-        <div class="metric">
-          <div class="metric-label">Casillas usadas</div>
-          <div class="metric-value" id="usedCells"></div>
-        </div>
-        <div class="metric">
-          <div class="metric-label">Restantes</div>
-          <div class="metric-value" id="remainingCells"></div>
-        </div>
-        <div class="metric">
-          <div class="metric-label">Siguiente número</div>
-          <div class="metric-value" id="nextCheckpoint"></div>
-        </div>
-        <div class="metric">
-          <div class="metric-label">Errores</div>
-          <div class="metric-value" id="errors"></div>
-        </div>
-      </div>
-
-      <div class="actions">
-        <button class="action" id="undoButton" type="button">Deshacer</button>
-        <button class="action" id="resetButton" type="button">Reiniciar</button>
-        <button class="action hint-button" id="hintButton" type="button">Pista</button>
-        <button class="action next-button" id="nextButton" type="button">Siguiente nivel</button>
-      </div>
-
-      <div class="rules">
-        <div class="rule good">Objetivo: llenar todas las casillas con un solo camino.</div>
-        <div class="rule good">Debes pasar por los números en orden ascendente.</div>
-        <div class="rule bad">No puedes saltar, cruzarte ni tocar un número futuro antes de tiempo.</div>
-      </div>
-    </aside>
+    <section class="screen game-screen" id="gameScreen" aria-label="Juego" hidden>
+      <main class="panel board-panel">
+        <section class="board-wrap" aria-label="Tablero de Zip">
+          <div class="board" id="board"></div>
+        </section>
+      </main>
+    </section>
   </div>
 
   <script>
@@ -633,6 +846,8 @@
     ];
 
     const state = {
+      screen: "home",
+      selectedDifficulty: "Fácil",
       levelIndex: 0,
       path: [],
       message: "Toca el número 1 para empezar.",
@@ -647,19 +862,11 @@
     };
 
     const el = {
+      homeScreen: document.getElementById("homeScreen"),
+      gameScreen: document.getElementById("gameScreen"),
       board: document.getElementById("board"),
-      levelName: document.getElementById("levelName"),
-      levelDifficulty: document.getElementById("levelDifficulty"),
-      message: document.getElementById("message"),
-      statusIcon: document.getElementById("statusIcon"),
-      usedCells: document.getElementById("usedCells"),
-      remainingCells: document.getElementById("remainingCells"),
-      nextCheckpoint: document.getElementById("nextCheckpoint"),
-      errors: document.getElementById("errors"),
-      undoButton: document.getElementById("undoButton"),
-      resetButton: document.getElementById("resetButton"),
-      hintButton: document.getElementById("hintButton"),
-      nextButton: document.getElementById("nextButton")
+      playButton: document.getElementById("playButton"),
+      difficultyButtons: Array.from(document.querySelectorAll("[data-difficulty]"))
     };
 
     function getLevel() {
@@ -692,6 +899,22 @@
 
     function setMessage(text) {
       state.message = text;
+      render();
+    }
+
+    function selectDifficulty(difficulty) {
+      state.selectedDifficulty = difficulty;
+      render();
+    }
+
+    function startGame() {
+      const levelIndex = LEVELS.findIndex((level) => level.difficulty === state.selectedDifficulty);
+      state.levelIndex = levelIndex >= 0 ? levelIndex : 0;
+      state.screen = "game";
+      state.path = [];
+      state.message = "Toca el número 1 para empezar.";
+      state.hintKey = null;
+      state.errors = 0;
       render();
     }
 
@@ -903,7 +1126,11 @@
       const checkpoints = checkpointByKey(level);
       const orders = orderByKey();
       el.board.style.setProperty("--size", level.size);
-      el.board.innerHTML = "";
+      el.board.innerHTML = `
+        <svg class="path-layer" aria-hidden="true">
+          <polyline class="path-line" id="pathLine" points=""></polyline>
+        </svg>
+      `;
 
       for (let r = 0; r < level.size; r++) {
         for (let c = 0; c < level.size; c++) {
@@ -926,14 +1153,6 @@
           button.dataset.col = String(c);
           button.textContent = checkpoint ? String(checkpoint) : "";
 
-          if (!checkpoint && order) {
-            const span = document.createElement("span");
-            span.className = "order";
-            span.textContent = String(order);
-            button.textContent = "";
-            button.appendChild(span);
-          }
-
           button.addEventListener("keydown", (event) => {
             if (event.key === "Enter" || event.key === " ") {
               event.preventDefault();
@@ -947,31 +1166,50 @@
           el.board.appendChild(button);
         }
       }
+
+      requestAnimationFrame(renderPathLine);
+    }
+
+    function renderPathLine() {
+      const line = document.getElementById("pathLine");
+      if (!line) return;
+
+      if (state.path.length < 2) {
+        line.setAttribute("points", "");
+        return;
+      }
+
+      const boardRect = el.board.getBoundingClientRect();
+      const points = state.path.map((cell) => {
+        const button = el.board.querySelector(`[data-row="${cell.r}"][data-col="${cell.c}"]`);
+        if (!button) return null;
+        const rect = button.getBoundingClientRect();
+        return `${rect.left + rect.width / 2 - boardRect.left - 8},${rect.top + rect.height / 2 - boardRect.top - 8}`;
+      }).filter(Boolean);
+
+      line.setAttribute("points", points.join(" "));
     }
 
     function render() {
       const level = getLevel();
-      const totalCells = level.size * level.size;
-      const reached = reachedCheckpoints(level);
-      const solved = isSolved(level);
-      const nextCheckpoint = Math.min(reached + 1, level.checkpoints.length);
+      const isGame = state.screen === "game";
 
-      el.levelName.textContent = level.name;
-      el.levelDifficulty.textContent = level.difficulty;
-      el.message.textContent = state.message;
-      el.statusIcon.textContent = solved ? "✓" : "!";
-      el.statusIcon.classList.toggle("solved", solved);
-      el.usedCells.textContent = `${state.path.length}/${totalCells}`;
-      el.remainingCells.textContent = String(totalCells - state.path.length);
-      el.nextCheckpoint.textContent = solved ? "-" : String(nextCheckpoint);
-      el.errors.textContent = String(state.errors);
-      renderBoard(level);
+      el.homeScreen.hidden = isGame;
+      el.gameScreen.hidden = !isGame;
+
+      el.difficultyButtons.forEach((button) => {
+        const active = button.dataset.difficulty === state.selectedDifficulty;
+        button.classList.toggle("active", active);
+        button.setAttribute("aria-pressed", String(active));
+      });
+
+      if (isGame) renderBoard(level);
     }
 
-    el.undoButton.addEventListener("click", undo);
-    el.resetButton.addEventListener("click", resetLevel);
-    el.hintButton.addEventListener("click", showHint);
-    el.nextButton.addEventListener("click", nextLevel);
+    el.difficultyButtons.forEach((button) => {
+      button.addEventListener("click", () => selectDifficulty(button.dataset.difficulty));
+    });
+    el.playButton.addEventListener("click", startGame);
 
     if (window.PointerEvent) {
       el.board.addEventListener("pointerdown", startDrawing);
@@ -980,7 +1218,13 @@
       window.addEventListener("pointercancel", stopDrawing);
     }
 
-    render();
+    const requestedDifficulty = new URLSearchParams(window.location.search).get("play");
+    if (requestedDifficulty && LEVELS.some((level) => level.difficulty === requestedDifficulty)) {
+      state.selectedDifficulty = requestedDifficulty;
+      startGame();
+    } else {
+      render();
+    }
   </script>
 </body>
 </html>
