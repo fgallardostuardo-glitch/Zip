@@ -2,9 +2,9 @@
 
 Colección de juegos sencillos para publicar en GitHub Pages.
 
-## Ruta Total
+## Zip - Ruta Total
 
-`Ruta Total` es un juego lógico de grilla: hay que dibujar un camino continuo, pasar por los números en orden y ocupar todas las casillas sin repetir movimientos.
+`Zip - Ruta Total` es un juego lógico de grilla: hay que dibujar un camino continuo, pasar por los números en orden y ocupar todas las casillas sin repetir movimientos.
 
 En celular se puede jugar arrastrando el dedo sobre el tablero para generar la ruta.
 
