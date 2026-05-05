@@ -760,26 +760,25 @@
       box-shadow: none;
     }
 
-    .cell.wall {
-      background:
-        linear-gradient(135deg, rgba(33, 25, 20, 0.16), rgba(33, 25, 20, 0.04)),
-        #d8cec5;
-      border-color: #c8bbb0;
-      color: transparent;
-      cursor: default;
-      pointer-events: none;
-    }
-
-    .cell.wall::after {
-      content: "";
-      width: 42%;
-      height: 42%;
-      border-radius: 5px;
-      background: rgba(33, 25, 20, 0.18);
-    }
-
     .cell:hover {
       background: var(--cell-hover);
+    }
+
+    .wall-layer {
+      position: absolute;
+      inset: 8px;
+      z-index: 4;
+      width: calc(100% - 16px);
+      height: calc(100% - 16px);
+      pointer-events: none;
+      overflow: visible;
+    }
+
+    .wall-segment {
+      position: absolute;
+      border-radius: 999px;
+      background: #7a6b62;
+      box-shadow: 0 2px 5px rgba(33, 25, 20, 0.18);
     }
 
     .cell.visited {
@@ -1077,40 +1076,43 @@
       return path.length > 1 && path.every((cell, index) => index === 0 || isAdjacent(path[index - 1], cell));
     }
 
-    function removablePairs(path) {
-      const pairs = [];
-      for (let i = 1; i < path.length - 2; i++) {
-        if (isAdjacent(path[i - 1], path[i + 2])) {
-          pairs.push([i, i + 1]);
-        }
-      }
-      return pairs;
+    function edgeKey(a, b) {
+      return [keyOf(a), keyOf(b)].sort().join("|");
     }
 
-    function applyWalls(path, desiredPairs, seed) {
-      const random = seededRandom(seed);
-      const removed = new Set();
-      const candidates = shuffled(removablePairs(path), random);
-
-      for (const [first, second] of candidates) {
-        if (removed.size / 2 >= desiredPairs) break;
-
-        let conflicts = false;
-        for (let i = first - 2; i <= second + 2; i++) {
-          if (removed.has(i)) conflicts = true;
-        }
-        if (conflicts) continue;
-
-        removed.add(first);
-        removed.add(second);
+    function potentialWallEdges(path, size) {
+      const solutionEdges = new Set();
+      for (let i = 1; i < path.length; i++) {
+        solutionEdges.add(edgeKey(path[i - 1], path[i]));
       }
 
-      const solution = path.filter((_, index) => !removed.has(index));
-      if (!isValidPath(solution)) return { solution: path, walls: [] };
+      const edges = [];
+      for (let r = 0; r < size; r++) {
+        for (let c = 0; c < size; c++) {
+          const cell = { r, c };
+          const neighbors = [
+            c < size - 1 ? { r, c: c + 1 } : null,
+            r < size - 1 ? { r: r + 1, c } : null
+          ].filter(Boolean);
 
+          neighbors.forEach((neighbor) => {
+            const key = edgeKey(cell, neighbor);
+            if (!solutionEdges.has(key)) {
+              edges.push({ a: cell, b: neighbor, key });
+            }
+          });
+        }
+      }
+
+      return edges;
+    }
+
+    function createWalls(path, size, desiredCount, seed) {
+      const random = seededRandom(seed);
+      const candidates = shuffled(potentialWallEdges(path, size), random);
       return {
-        solution,
-        walls: [...removed].sort((a, b) => a - b).map((index) => path[index])
+        solution: path,
+        walls: candidates.slice(0, desiredCount)
       };
     }
 
@@ -1155,17 +1157,17 @@
       "Fácil": {
         sizeFor: () => 5,
         checkpointsFor: () => 5,
-        wallPairs: [0, 0, 1, 0, 1, 1, 0, 1, 2, 1]
+        wallCounts: [0, 1, 2, 1, 2, 3, 1, 3, 4, 2]
       },
       "Medio": {
         sizeFor: () => 6,
         checkpointsFor: () => 6,
-        wallPairs: [1, 1, 2, 1, 2, 2, 3, 1, 3, 2]
+        wallCounts: [3, 4, 5, 4, 6, 5, 7, 4, 8, 6]
       },
       "Difícil": {
         sizeFor: (number) => (number <= 8 ? 6 : 7),
         checkpointsFor: (number) => (number <= 8 ? 6 : 7),
-        wallPairs: [2, 3, 2, 3, 4, 2, 4, 3, 5, 4]
+        wallCounts: [7, 9, 8, 10, 12, 8, 13, 10, 14, 12]
       }
     };
 
@@ -1174,9 +1176,9 @@
       const size = config.sizeFor(number);
       const pattern = PATTERN_BUILDERS[(number - 1) % PATTERN_BUILDERS.length];
       const basePath = pattern(size);
-      const desiredPairs = config.wallPairs[(number - 1) % config.wallPairs.length];
+      const desiredWalls = config.wallCounts[(number - 1) % config.wallCounts.length];
       const seed = (DIFFICULTIES.indexOf(difficulty) + 1) * 1000 + number * 37 + size;
-      const { solution, walls } = applyWalls(basePath, desiredPairs, seed);
+      const { solution, walls } = createWalls(basePath, size, desiredWalls, seed);
       const checkpoints = checkpointIndexesFor(solution.length, config.checkpointsFor(number));
 
       return createLevel(`Partida ${number}`, size, solution, checkpoints, difficulty, walls, number);
@@ -1280,12 +1282,12 @@
       return map;
     }
 
-    function wallByKey(level) {
-      return new Set(level.walls.map(keyOf));
+    function wallEdgeSet(level) {
+      return new Set(level.walls.map((wall) => wall.key || edgeKey(wall.a, wall.b)));
     }
 
-    function isWall(cell, level) {
-      return wallByKey(level).has(keyOf(cell));
+    function hasWallBetween(a, b, level) {
+      return wallEdgeSet(level).has(edgeKey(a, b));
     }
 
     function orderByKey() {
@@ -1471,7 +1473,7 @@
       if (state.screen !== "game") return false;
 
       const level = getLevel();
-      if (isSolved(level) || isWall(cell, level)) return false;
+      if (isSolved(level)) return false;
 
       const checkpoints = checkpointByKey(level);
       const orders = orderByKey();
@@ -1490,7 +1492,7 @@
 
       if (previous && sameCell(cell, previous)) return undo();
       if (sameCell(cell, last)) return true;
-      if (alreadyVisited || !isAdjacent(last, cell)) return registerError();
+      if (alreadyVisited || !isAdjacent(last, cell) || hasWallBetween(last, cell, level)) return registerError();
 
       const reached = reachedCheckpoints(level);
       if (checkpointLabel && checkpointLabel !== reached + 1) return registerError();
@@ -1558,7 +1560,7 @@
       if (event.button !== undefined && event.button !== 0) return;
 
       const firstCell = cellFromPointer(event);
-      if (!firstCell || isWall(firstCell, getLevel())) return;
+      if (!firstCell) return;
 
       event.preventDefault();
       drawing.active = true;
@@ -1596,13 +1598,13 @@
 
     function renderBoard(level) {
       const checkpoints = checkpointByKey(level);
-      const walls = wallByKey(level);
       const orders = orderByKey();
       el.board.style.setProperty("--size", level.size);
       el.board.innerHTML = `
         <svg class="path-layer" aria-hidden="true">
           <polyline class="path-line" id="pathLine" points=""></polyline>
         </svg>
+        <div class="wall-layer" id="wallLayer" aria-hidden="true"></div>
       `;
 
       for (let r = 0; r < level.size; r++) {
@@ -1611,21 +1613,19 @@
           const cellKey = keyOf(cell);
           const checkpoint = checkpoints.get(cellKey);
           const order = orders.get(cellKey);
-          const wall = walls.has(cellKey);
           const isCurrent = state.path.length > 0 && sameCell(state.path[state.path.length - 1], cell);
           const button = document.createElement("button");
           button.type = "button";
           button.className = [
             "cell",
-            wall ? "wall" : "",
             order ? "visited" : "",
             checkpoint ? "checkpoint" : "",
             isCurrent ? "current" : ""
           ].filter(Boolean).join(" ");
-          button.setAttribute("aria-label", wall ? `Muro en fila ${r + 1}, columna ${c + 1}` : `Fila ${r + 1}, columna ${c + 1}`);
+          button.setAttribute("aria-label", `Fila ${r + 1}, columna ${c + 1}`);
           button.dataset.row = String(r);
           button.dataset.col = String(c);
-          button.disabled = wall || state.screen !== "game";
+          button.disabled = state.screen !== "game";
           button.textContent = checkpoint ? String(checkpoint) : "";
 
           button.addEventListener("keydown", (event) => {
@@ -1642,7 +1642,10 @@
         }
       }
 
-      requestAnimationFrame(renderPathLine);
+      requestAnimationFrame(() => {
+        renderPathLine();
+        renderWallSegments(level);
+      });
     }
 
     function renderPathLine() {
@@ -1663,6 +1666,44 @@
       }).filter(Boolean);
 
       line.setAttribute("points", points.join(" "));
+    }
+
+    function renderWallSegments(level) {
+      const layer = document.getElementById("wallLayer");
+      if (!layer) return;
+
+      layer.innerHTML = "";
+      const layerRect = layer.getBoundingClientRect();
+      const thickness = 6;
+
+      level.walls.forEach((wall) => {
+        const first = el.board.querySelector(`[data-row="${wall.a.r}"][data-col="${wall.a.c}"]`);
+        const second = el.board.querySelector(`[data-row="${wall.b.r}"][data-col="${wall.b.c}"]`);
+        if (!first || !second) return;
+
+        const firstRect = first.getBoundingClientRect();
+        const secondRect = second.getBoundingClientRect();
+        const segment = document.createElement("div");
+        segment.className = "wall-segment";
+
+        if (wall.a.r === wall.b.r) {
+          const x = (firstRect.right + secondRect.left) / 2 - layerRect.left - thickness / 2;
+          const y = firstRect.top - layerRect.top + firstRect.height * 0.16;
+          segment.style.left = `${x}px`;
+          segment.style.top = `${y}px`;
+          segment.style.width = `${thickness}px`;
+          segment.style.height = `${firstRect.height * 0.68}px`;
+        } else {
+          const x = firstRect.left - layerRect.left + firstRect.width * 0.16;
+          const y = (firstRect.bottom + secondRect.top) / 2 - layerRect.top - thickness / 2;
+          segment.style.left = `${x}px`;
+          segment.style.top = `${y}px`;
+          segment.style.width = `${firstRect.width * 0.68}px`;
+          segment.style.height = `${thickness}px`;
+        }
+
+        layer.appendChild(segment);
+      });
     }
 
     function renderHud(level) {
