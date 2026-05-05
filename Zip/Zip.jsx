@@ -1,4 +1,4 @@
-import React, { useMemo, useRef, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { RotateCcw, Undo2, Lightbulb, Trophy, ArrowRight, Target, Grid3X3, CheckCircle2, XCircle } from "lucide-react";
 
@@ -66,8 +66,6 @@ export default function RutaTotalGame() {
   const [message, setMessage] = useState("Toca el número 1 para empezar.");
   const [hintKey, setHintKey] = useState(null);
   const [errors, setErrors] = useState(0);
-  const pathRef = useRef([]);
-  const drawingRef = useRef({ active: false, pointerId: null, lastKey: null });
 
   const level = LEVELS[levelIndex];
   const totalCells = level.size * level.size;
@@ -96,7 +94,6 @@ export default function RutaTotalGame() {
   const remaining = totalCells - path.length;
 
   function resetLevel() {
-    pathRef.current = [];
     setPath([]);
     setMessage("Toca el número 1 para empezar.");
     setHintKey(null);
@@ -104,17 +101,14 @@ export default function RutaTotalGame() {
   }
 
   function undo() {
-    if (pathRef.current.length === 0) return;
-    const nextPath = pathRef.current.slice(0, -1);
-    pathRef.current = nextPath;
-    setPath(nextPath);
+    if (path.length === 0) return;
+    setPath((prev) => prev.slice(0, -1));
     setMessage("Último movimiento deshecho.");
     setHintKey(null);
   }
 
   function nextLevel() {
     setLevelIndex((current) => (current + 1) % LEVELS.length);
-    pathRef.current = [];
     setPath([]);
     setMessage("Nuevo tablero. Empieza por el número 1.");
     setHintKey(null);
@@ -122,9 +116,8 @@ export default function RutaTotalGame() {
   }
 
   function showHint() {
-    const currentPath = pathRef.current;
-    if (currentPath.length === totalCells) return;
-    const followsGuide = currentPath.every((cell, index) => sameCell(cell, level.solution[index]));
+    if (path.length === totalCells) return;
+    const followsGuide = path.every((cell, index) => sameCell(cell, level.solution[index]));
 
     if (!followsGuide) {
       setMessage("Tu ruta se desvió del camino guía. Retrocede o reinicia para usar pista.");
@@ -132,7 +125,7 @@ export default function RutaTotalGame() {
       return;
     }
 
-    const nextCell = level.solution[currentPath.length];
+    const nextCell = level.solution[path.length];
     if (nextCell) {
       setHintKey(keyOf(nextCell));
       setMessage("Pista marcada: esa casilla mantiene una solución válida.");
@@ -146,28 +139,20 @@ export default function RutaTotalGame() {
   }
 
   function handleCellClick(cell) {
-    const currentPath = pathRef.current;
-    const currentReached = currentPath.reduce((count, pathCell) => {
-      const label = checkpointByKey.get(keyOf(pathCell));
-      return label ? Math.max(count, label) : count;
-    }, 0);
-    if (currentPath.length === totalCells && currentReached === level.checkpoints.length) return;
+    if (isSolved) return;
 
     const cellKey = keyOf(cell);
     const checkpointLabel = checkpointByKey.get(cellKey);
-    const last = currentPath[currentPath.length - 1];
-    const previous = currentPath[currentPath.length - 2];
-    const currentOrderByKey = new Map();
-    currentPath.forEach((pathCell, index) => currentOrderByKey.set(keyOf(pathCell), index + 1));
-    const alreadyVisited = currentOrderByKey.has(cellKey);
+    const last = path[path.length - 1];
+    const previous = path[path.length - 2];
+    const alreadyVisited = orderByKey.has(cellKey);
 
-    if (currentPath.length === 0) {
+    if (path.length === 0) {
       if (checkpointLabel !== 1) {
         registerError("Debes comenzar en el número 1. Sin atajos, Señor Gallardo.");
         return;
       }
-      pathRef.current = [cell];
-      setPath(pathRef.current);
+      setPath([cell]);
       setMessage("Bien. Ahora construye una ruta continua hacia el siguiente número.");
       setHintKey(null);
       return;
@@ -190,89 +175,25 @@ export default function RutaTotalGame() {
       return;
     }
 
-    if (checkpointLabel && checkpointLabel !== currentReached + 1) {
-      registerError(`Ese número no toca todavía. El siguiente objetivo es el ${currentReached + 1}.`);
+    if (checkpointLabel && checkpointLabel !== reachedCheckpoints + 1) {
+      registerError(`Ese número no toca todavía. El siguiente objetivo es el ${reachedCheckpoints + 1}.`);
       return;
     }
 
-    const nextPath = [...currentPath, cell];
-    pathRef.current = nextPath;
+    const nextPath = [...path, cell];
     setPath(nextPath);
     setHintKey(null);
 
-    const nextReached = checkpointLabel ? checkpointLabel : currentReached;
+    const nextReached = checkpointLabel ? checkpointLabel : reachedCheckpoints;
     if (nextPath.length === totalCells && nextReached === level.checkpoints.length) {
       setMessage("Tablero resuelto. Camino completo, números en orden y sin casillas libres.");
     } else if (checkpointLabel) {
       setMessage(`Correcto: llegaste al ${checkpointLabel}. Ahora busca el ${checkpointLabel + 1}.`);
-    } else if (totalCells - currentPath.length - 1 <= 3) {
+    } else if (remaining - 1 <= 3) {
       setMessage("Cuidado con el cierre: no dejes una isla imposible de completar.");
     } else {
       setMessage("Sigue. El tablero castiga la improvisación más que el error.");
     }
-  }
-
-  function cellFromPointer(event) {
-    const element = document.elementFromPoint(event.clientX, event.clientY);
-    const button = element?.closest?.("[data-route-cell]");
-    if (!button || !event.currentTarget.contains(button)) return null;
-    return {
-      r: Number(button.dataset.row),
-      c: Number(button.dataset.col)
-    };
-  }
-
-  function cellsToTrace(target) {
-    const last = pathRef.current[pathRef.current.length - 1];
-    if (!last || sameCell(last, target) || isAdjacent(last, target)) return [target];
-    if (last.r !== target.r && last.c !== target.c) return [target];
-
-    const cells = [];
-    const stepR = Math.sign(target.r - last.r);
-    const stepC = Math.sign(target.c - last.c);
-    let r = last.r + stepR;
-    let c = last.c + stepC;
-
-    while (r !== target.r || c !== target.c) {
-      cells.push({ r, c });
-      r += stepR;
-      c += stepC;
-    }
-    cells.push(target);
-    return cells;
-  }
-
-  function tracePointerCell(event) {
-    const target = cellFromPointer(event);
-    if (!target) return;
-
-    const drawing = drawingRef.current;
-    const targetKey = keyOf(target);
-    if (targetKey === drawing.lastKey) return;
-    drawing.lastKey = targetKey;
-
-    cellsToTrace(target).forEach((cell) => handleCellClick(cell));
-  }
-
-  function handleBoardPointerDown(event) {
-    if (event.button !== 0 || !cellFromPointer(event)) return;
-    event.preventDefault();
-    drawingRef.current = { active: true, pointerId: event.pointerId, lastKey: null };
-    event.currentTarget.setPointerCapture?.(event.pointerId);
-    tracePointerCell(event);
-  }
-
-  function handleBoardPointerMove(event) {
-    const drawing = drawingRef.current;
-    if (!drawing.active || drawing.pointerId !== event.pointerId) return;
-    event.preventDefault();
-    tracePointerCell(event);
-  }
-
-  function stopBoardDrawing(event) {
-    const drawing = drawingRef.current;
-    if (drawing.pointerId !== null && event.pointerId !== drawing.pointerId) return;
-    drawingRef.current = { active: false, pointerId: null, lastKey: null };
   }
 
   const boardCells = [];
@@ -304,12 +225,8 @@ export default function RutaTotalGame() {
 
           <section className="flex justify-center py-2">
             <div
-              className="grid gap-2 rounded-3xl bg-slate-900 p-3 sm:p-4 border border-white/10 shadow-inner touch-none"
+              className="grid gap-2 rounded-3xl bg-slate-900 p-3 sm:p-4 border border-white/10 shadow-inner"
               style={{ gridTemplateColumns: `repeat(${level.size}, minmax(44px, 68px))` }}
-              onPointerDown={handleBoardPointerDown}
-              onPointerMove={handleBoardPointerMove}
-              onPointerUp={stopBoardDrawing}
-              onPointerCancel={stopBoardDrawing}
             >
               {boardCells.map((cell) => {
                 const cellKey = keyOf(cell);
@@ -322,20 +239,9 @@ export default function RutaTotalGame() {
                   <motion.button
                     key={cellKey}
                     whileTap={{ scale: 0.94 }}
-                    data-route-cell
-                    data-row={cell.r}
-                    data-col={cell.c}
-                    onClick={() => {
-                      if (typeof window === "undefined" || !window.PointerEvent) handleCellClick(cell);
-                    }}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter" || event.key === " ") {
-                        event.preventDefault();
-                        handleCellClick(cell);
-                      }
-                    }}
+                    onClick={() => handleCellClick(cell)}
                     className={[
-                      "relative aspect-square rounded-2xl border text-lg sm:text-xl font-black transition-all select-none touch-none",
+                      "relative aspect-square rounded-2xl border text-lg sm:text-xl font-black transition-all select-none",
                       order
                         ? "bg-cyan-400 text-slate-950 border-cyan-200 shadow-lg shadow-cyan-500/20"
                         : "bg-slate-800 text-slate-200 border-white/10 hover:bg-slate-700",

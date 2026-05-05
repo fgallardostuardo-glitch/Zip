@@ -2,8 +2,8 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta http-equiv="refresh" content="0; url=./Zip/index.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#ffffff" />
   <title>Zip - Ruta Total</title>
   <style>
     :root {
@@ -760,7 +760,32 @@
   </style>
 </head>
 <body>
-  <p>Abriendo Zip. Si no avanza automáticamente, entra a <a href="./Zip/index.html">Zip/index.html</a>.</p>
+  <div class="app" id="app">
+    <section class="screen home-screen" id="homeScreen" aria-labelledby="homeTitle">
+      <div class="home-card">
+        <div class="zip-mark" aria-hidden="true"></div>
+        <h1 class="home-title" id="homeTitle">Zip</h1>
+        <p class="home-copy">Elige una dificultad y dibuja una sola ruta para completar toda la grilla.</p>
+
+        <div class="difficulty-group" aria-label="Dificultad">
+          <button class="difficulty-button active" type="button" data-difficulty="Fácil">Fácil</button>
+          <button class="difficulty-button" type="button" data-difficulty="Medio">Medio</button>
+          <button class="difficulty-button" type="button" data-difficulty="Difícil">Difícil</button>
+        </div>
+
+        <button class="play-button" id="playButton" type="button">Jugar</button>
+      </div>
+    </section>
+
+    <section class="screen game-screen" id="gameScreen" aria-label="Juego" hidden>
+      <main class="panel board-panel">
+        <section class="board-wrap" aria-label="Tablero de Zip">
+          <div class="board" id="board"></div>
+        </section>
+      </main>
+    </section>
+  </div>
+
   <script>
     const keyOf = (cell) => `${cell.r},${cell.c}`;
     const sameCell = (a, b) => a && b && a.r === b.r && a.c === b.c;
