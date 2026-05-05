@@ -621,6 +621,14 @@
       background: #f7f3ee;
     }
 
+    .home-record {
+      min-height: 20px;
+      margin-top: 14px;
+      color: var(--soft);
+      font-size: 13px;
+      font-weight: 800;
+    }
+
     .difficulty-button {
       min-width: 0;
       min-height: 44px;
@@ -663,7 +671,10 @@
     .game-screen {
       min-height: calc(100dvh - 36px);
       display: grid;
-      place-items: center;
+      grid-template-rows: auto auto;
+      align-content: center;
+      justify-items: center;
+      gap: 14px;
     }
 
     .game-screen .board-panel {
@@ -675,6 +686,36 @@
     .game-screen .board-wrap {
       width: 100%;
       padding: 0;
+    }
+
+    .game-hud {
+      width: min(100%, 354px);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .hud-chip {
+      min-height: 36px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid rgba(33, 25, 20, 0.08);
+      border-radius: 999px;
+      background: #ffffff;
+      color: var(--muted);
+      box-shadow: 0 10px 24px rgba(33, 25, 20, 0.08);
+      padding: 0 14px;
+      font-size: 13px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .timer-chip {
+      min-width: 88px;
+      color: var(--ink);
+      font-variant-numeric: tabular-nums;
     }
 
     .game-screen .board {
@@ -719,6 +760,24 @@
       box-shadow: none;
     }
 
+    .cell.wall {
+      background:
+        linear-gradient(135deg, rgba(33, 25, 20, 0.16), rgba(33, 25, 20, 0.04)),
+        #d8cec5;
+      border-color: #c8bbb0;
+      color: transparent;
+      cursor: default;
+      pointer-events: none;
+    }
+
+    .cell.wall::after {
+      content: "";
+      width: 42%;
+      height: 42%;
+      border-radius: 5px;
+      background: rgba(33, 25, 20, 0.18);
+    }
+
     .cell:hover {
       background: var(--cell-hover);
     }
@@ -757,6 +816,124 @@
     .cell.visited:not(.checkpoint)::after {
       display: none;
     }
+
+    .countdown-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      display: grid;
+      place-items: center;
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(8px);
+    }
+
+    .countdown-card {
+      width: 170px;
+      height: 170px;
+      display: grid;
+      place-items: center;
+      border-radius: 34px;
+      background: #ffffff;
+      box-shadow: var(--shadow);
+      color: var(--orange);
+      font-size: 74px;
+      font-weight: 950;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .win-screen {
+      min-height: calc(100dvh - 36px);
+      display: grid;
+      align-content: center;
+    }
+
+    .win-card {
+      width: 100%;
+      max-width: 360px;
+      margin: 0 auto;
+      border: 1px solid rgba(33, 25, 20, 0.08);
+      border-radius: 28px;
+      background: #ffffff;
+      box-shadow: var(--shadow);
+      padding: 28px 22px 22px;
+      text-align: center;
+    }
+
+    .win-title {
+      margin: 0;
+      color: var(--ink);
+      font-size: 34px;
+      line-height: 1;
+      font-weight: 950;
+    }
+
+    .win-copy {
+      margin: 10px auto 0;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.4;
+    }
+
+    .final-time {
+      margin: 22px auto 8px;
+      color: var(--orange);
+      font-size: 48px;
+      font-weight: 950;
+      font-variant-numeric: tabular-nums;
+      line-height: 1;
+    }
+
+    .best-time {
+      min-height: 20px;
+      color: var(--soft);
+      font-size: 13px;
+      font-weight: 850;
+    }
+
+    .record-list {
+      display: grid;
+      gap: 8px;
+      margin: 18px 0 20px;
+    }
+
+    .record-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      border-radius: 14px;
+      background: #f7f3ee;
+      color: var(--muted);
+      padding: 10px 12px;
+      font-size: 13px;
+      font-weight: 850;
+    }
+
+    .record-row span:last-child {
+      color: var(--ink);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .win-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .secondary-button {
+      min-height: 52px;
+      border: 0;
+      border-radius: 999px;
+      background: #f7f3ee;
+      color: var(--muted);
+      font-size: 15px;
+      font-weight: 950;
+      cursor: pointer;
+    }
+
+    .secondary-button:active {
+      transform: translateY(1px);
+    }
   </style>
 </head>
 <body>
@@ -773,20 +950,48 @@
           <button class="difficulty-button" type="button" data-difficulty="Difícil">Difícil</button>
         </div>
 
+        <div class="home-record" id="homeRecord" aria-live="polite"></div>
         <button class="play-button" id="playButton" type="button">Jugar</button>
       </div>
     </section>
 
     <section class="screen game-screen" id="gameScreen" aria-label="Juego" hidden>
+      <div class="game-hud" aria-label="Progreso">
+        <div class="hud-chip" id="levelChip">Partida 1/20</div>
+        <div class="hud-chip timer-chip" id="timerDisplay">00:00.0</div>
+      </div>
       <main class="panel board-panel">
         <section class="board-wrap" aria-label="Tablero de Zip">
           <div class="board" id="board"></div>
         </section>
       </main>
     </section>
+
+    <section class="screen win-screen" id="winScreen" aria-labelledby="winTitle" hidden>
+      <div class="win-card">
+        <h2 class="win-title" id="winTitle">Felicitaciones</h2>
+        <p class="win-copy" id="winCopy">Completaste la ruta.</p>
+        <div class="final-time" id="finalTime">00:00.0</div>
+        <div class="best-time" id="bestTime"></div>
+        <div class="record-list" id="recordList" aria-label="Registro de tiempos"></div>
+        <div class="win-actions">
+          <button class="secondary-button" id="homeButton" type="button">Inicio</button>
+          <button class="play-button" id="nextGameButton" type="button">Siguiente</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div class="countdown-overlay" id="countdownOverlay" hidden>
+    <div class="countdown-card" id="countdownValue" aria-live="assertive">3</div>
   </div>
 
   <script>
+    const DIFFICULTIES = ["Fácil", "Medio", "Difícil"];
+    const LEVELS_PER_DIFFICULTY = 20;
+    const RECORDS_KEY = "zip_time_records_v2";
+    const PROGRESS_KEY = "zip_level_progress_v1";
+
     const keyOf = (cell) => `${cell.r},${cell.c}`;
     const sameCell = (a, b) => a && b && a.r === b.r && a.c === b.c;
     const isAdjacent = (a, b) => Math.abs(a.r - b.r) + Math.abs(a.c - b.c) === 1;
@@ -803,7 +1008,19 @@
       return reverse ? [...path].reverse() : path;
     }
 
-    function spiralPath(size) {
+    function columnSerpentinePath(size, reverse = false) {
+      const path = [];
+      for (let c = 0; c < size; c++) {
+        if (c % 2 === 0) {
+          for (let r = 0; r < size; r++) path.push({ r, c });
+        } else {
+          for (let r = size - 1; r >= 0; r--) path.push({ r, c });
+        }
+      }
+      return reverse ? [...path].reverse() : path;
+    }
+
+    function spiralPath(size, reverse = false) {
       const path = [];
       let top = 0;
       let bottom = size - 1;
@@ -824,35 +1041,189 @@
           left++;
         }
       }
-      return path;
+
+      return reverse ? [...path].reverse() : path;
     }
 
-    function createLevel(name, size, solution, checkpointIndexes, difficulty) {
+    function mirrorPath(path, size) {
+      return path.map((cell) => ({ r: cell.r, c: size - 1 - cell.c }));
+    }
+
+    function rotatePath(path, size) {
+      return path.map((cell) => ({ r: cell.c, c: size - 1 - cell.r }));
+    }
+
+    function seededRandom(seed) {
+      let value = seed >>> 0;
+      return () => {
+        value += 0x6D2B79F5;
+        let t = value;
+        t = Math.imul(t ^ (t >>> 15), t | 1);
+        t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+        return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+      };
+    }
+
+    function shuffled(items, random) {
+      const copy = [...items];
+      for (let i = copy.length - 1; i > 0; i--) {
+        const j = Math.floor(random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function isValidPath(path) {
+      return path.length > 1 && path.every((cell, index) => index === 0 || isAdjacent(path[index - 1], cell));
+    }
+
+    function removablePairs(path) {
+      const pairs = [];
+      for (let i = 1; i < path.length - 2; i++) {
+        if (isAdjacent(path[i - 1], path[i + 2])) {
+          pairs.push([i, i + 1]);
+        }
+      }
+      return pairs;
+    }
+
+    function applyWalls(path, desiredPairs, seed) {
+      const random = seededRandom(seed);
+      const removed = new Set();
+      const candidates = shuffled(removablePairs(path), random);
+
+      for (const [first, second] of candidates) {
+        if (removed.size / 2 >= desiredPairs) break;
+
+        let conflicts = false;
+        for (let i = first - 2; i <= second + 2; i++) {
+          if (removed.has(i)) conflicts = true;
+        }
+        if (conflicts) continue;
+
+        removed.add(first);
+        removed.add(second);
+      }
+
+      const solution = path.filter((_, index) => !removed.has(index));
+      if (!isValidPath(solution)) return { solution: path, walls: [] };
+
       return {
+        solution,
+        walls: [...removed].sort((a, b) => a - b).map((index) => path[index])
+      };
+    }
+
+    function checkpointIndexesFor(length, count) {
+      const last = length - 1;
+      const indexes = [];
+      for (let i = 0; i < count; i++) {
+        const index = Math.round((i * last) / (count - 1));
+        if (!indexes.includes(index)) indexes.push(index);
+      }
+      if (indexes[indexes.length - 1] !== last) indexes.push(last);
+      return indexes;
+    }
+
+    function createLevel(name, size, solution, checkpointIndexes, difficulty, walls, number) {
+      return {
+        id: `${difficulty}-${number}`,
         name,
+        number,
         size,
         solution,
+        walls,
         difficulty,
         checkpoints: checkpointIndexes.map((index, i) => ({ ...solution[index], label: i + 1 }))
       };
     }
 
-    const LEVELS = [
-      createLevel("Primer trazo", 5, serpentinePath(5), [0, 6, 12, 18, 24], "Fácil"),
-      createLevel("Caracol", 5, spiralPath(5), [0, 7, 12, 18, 24], "Medio"),
-      createLevel("Ruta larga", 6, serpentinePath(6), [0, 8, 15, 23, 30, 35], "Medio"),
-      createLevel("Espiral cerrada", 6, spiralPath(6), [0, 10, 17, 25, 31, 35], "Difícil"),
-      createLevel("De vuelta", 6, serpentinePath(6, true), [0, 6, 13, 22, 29, 35], "Difícil")
+    const PATTERN_BUILDERS = [
+      (size) => serpentinePath(size),
+      (size) => spiralPath(size),
+      (size) => columnSerpentinePath(size),
+      (size) => serpentinePath(size, true),
+      (size) => spiralPath(size, true),
+      (size) => columnSerpentinePath(size, true),
+      (size) => mirrorPath(spiralPath(size), size),
+      (size) => rotatePath(serpentinePath(size), size),
+      (size) => rotatePath(spiralPath(size, true), size),
+      (size) => mirrorPath(columnSerpentinePath(size, true), size)
     ];
+
+    const DIFFICULTY_CONFIG = {
+      "Fácil": {
+        sizeFor: () => 5,
+        checkpointsFor: () => 5,
+        wallPairs: [0, 0, 1, 0, 1, 1, 0, 1, 2, 1]
+      },
+      "Medio": {
+        sizeFor: () => 6,
+        checkpointsFor: () => 6,
+        wallPairs: [1, 1, 2, 1, 2, 2, 3, 1, 3, 2]
+      },
+      "Difícil": {
+        sizeFor: (number) => (number <= 8 ? 6 : 7),
+        checkpointsFor: (number) => (number <= 8 ? 6 : 7),
+        wallPairs: [2, 3, 2, 3, 4, 2, 4, 3, 5, 4]
+      }
+    };
+
+    function buildLevel(difficulty, number) {
+      const config = DIFFICULTY_CONFIG[difficulty];
+      const size = config.sizeFor(number);
+      const pattern = PATTERN_BUILDERS[(number - 1) % PATTERN_BUILDERS.length];
+      const basePath = pattern(size);
+      const desiredPairs = config.wallPairs[(number - 1) % config.wallPairs.length];
+      const seed = (DIFFICULTIES.indexOf(difficulty) + 1) * 1000 + number * 37 + size;
+      const { solution, walls } = applyWalls(basePath, desiredPairs, seed);
+      const checkpoints = checkpointIndexesFor(solution.length, config.checkpointsFor(number));
+
+      return createLevel(`Partida ${number}`, size, solution, checkpoints, difficulty, walls, number);
+    }
+
+    function buildLevels() {
+      return DIFFICULTIES.flatMap((difficulty) => {
+        return Array.from({ length: LEVELS_PER_DIFFICULTY }, (_, index) => buildLevel(difficulty, index + 1));
+      });
+    }
+
+    const LEVELS = buildLevels();
+
+    function readJson(key, fallback) {
+      try {
+        const value = localStorage.getItem(key);
+        return value ? JSON.parse(value) : fallback;
+      } catch {
+        return fallback;
+      }
+    }
+
+    function writeJson(key, value) {
+      try {
+        localStorage.setItem(key, JSON.stringify(value));
+      } catch {}
+    }
+
+    function defaultProgress() {
+      return DIFFICULTIES.reduce((progress, difficulty) => {
+        progress[difficulty] = 1;
+        return progress;
+      }, {});
+    }
 
     const state = {
       screen: "home",
       selectedDifficulty: "Fácil",
       levelIndex: 0,
       path: [],
-      message: "Toca el número 1 para empezar.",
-      hintKey: null,
-      errors: 0
+      errors: 0,
+      countdownValue: "3",
+      elapsedMs: 0,
+      startedAt: null,
+      finishedRecord: null,
+      records: readJson(RECORDS_KEY, []),
+      progress: { ...defaultProgress(), ...readJson(PROGRESS_KEY, {}) }
     };
 
     const drawing = {
@@ -861,16 +1232,46 @@
       lastKey: null
     };
 
+    let countdownTimer = null;
+    let timerInterval = null;
+
     const el = {
       homeScreen: document.getElementById("homeScreen"),
       gameScreen: document.getElementById("gameScreen"),
+      winScreen: document.getElementById("winScreen"),
       board: document.getElementById("board"),
+      homeRecord: document.getElementById("homeRecord"),
+      levelChip: document.getElementById("levelChip"),
+      timerDisplay: document.getElementById("timerDisplay"),
+      countdownOverlay: document.getElementById("countdownOverlay"),
+      countdownValue: document.getElementById("countdownValue"),
+      finalTime: document.getElementById("finalTime"),
+      bestTime: document.getElementById("bestTime"),
+      winCopy: document.getElementById("winCopy"),
+      recordList: document.getElementById("recordList"),
       playButton: document.getElementById("playButton"),
+      homeButton: document.getElementById("homeButton"),
+      nextGameButton: document.getElementById("nextGameButton"),
       difficultyButtons: Array.from(document.querySelectorAll("[data-difficulty]"))
     };
 
     function getLevel() {
       return LEVELS[state.levelIndex];
+    }
+
+    function levelsForDifficulty(difficulty) {
+      return LEVELS.filter((level) => level.difficulty === difficulty);
+    }
+
+    function levelIndexFor(difficulty, number) {
+      const normalized = ((number - 1) % LEVELS_PER_DIFFICULTY) + 1;
+      const index = LEVELS.findIndex((level) => level.difficulty === difficulty && level.number === normalized);
+      return index >= 0 ? index : LEVELS.findIndex((level) => level.difficulty === difficulty);
+    }
+
+    function currentProgressNumber(difficulty) {
+      const value = Number(state.progress[difficulty] || 1);
+      return Math.min(Math.max(value, 1), LEVELS_PER_DIFFICULTY);
     }
 
     function checkpointByKey(level) {
@@ -879,10 +1280,22 @@
       return map;
     }
 
+    function wallByKey(level) {
+      return new Set(level.walls.map(keyOf));
+    }
+
+    function isWall(cell, level) {
+      return wallByKey(level).has(keyOf(cell));
+    }
+
     function orderByKey() {
       const map = new Map();
       state.path.forEach((cell, index) => map.set(keyOf(cell), index + 1));
       return map;
+    }
+
+    function totalPlayableCells(level) {
+      return level.solution.length;
     }
 
     function reachedCheckpoints(level) {
@@ -894,12 +1307,82 @@
     }
 
     function isSolved(level) {
-      return state.path.length === level.size * level.size && reachedCheckpoints(level) === level.checkpoints.length;
+      return state.path.length === totalPlayableCells(level) && reachedCheckpoints(level) === level.checkpoints.length;
     }
 
-    function setMessage(text) {
-      state.message = text;
-      render();
+    function formatTime(ms) {
+      const safeMs = Math.max(0, Math.round(ms));
+      const totalTenths = Math.floor(safeMs / 100);
+      const tenths = totalTenths % 10;
+      const totalSeconds = Math.floor(totalTenths / 10);
+      const seconds = totalSeconds % 60;
+      const minutes = Math.floor(totalSeconds / 60);
+      return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}.${tenths}`;
+    }
+
+    function clearCountdown() {
+      if (countdownTimer) {
+        clearTimeout(countdownTimer);
+        countdownTimer = null;
+      }
+    }
+
+    function stopTimer() {
+      if (state.startedAt !== null) {
+        state.elapsedMs = performance.now() - state.startedAt;
+      }
+      state.startedAt = null;
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+      renderTimer();
+    }
+
+    function startTimer() {
+      stopTimer();
+      state.elapsedMs = 0;
+      state.startedAt = performance.now();
+      timerInterval = setInterval(renderTimer, 100);
+      renderTimer();
+    }
+
+    function renderTimer() {
+      const elapsed = state.startedAt === null ? state.elapsedMs : performance.now() - state.startedAt;
+      el.timerDisplay.textContent = formatTime(elapsed);
+    }
+
+    function saveTimeRecord(level, elapsedMs) {
+      const record = {
+        id: `${level.id}-${Date.now()}`,
+        difficulty: level.difficulty,
+        levelNumber: level.number,
+        levelName: level.name,
+        elapsedMs: Math.round(elapsedMs),
+        walls: level.walls.length,
+        finishedAt: new Date().toISOString()
+      };
+
+      state.records = [record, ...state.records].slice(0, 300);
+      writeJson(RECORDS_KEY, state.records);
+      return record;
+    }
+
+    function bestRecordFor(level) {
+      return state.records
+        .filter((record) => record.difficulty === level.difficulty && record.levelNumber === level.number)
+        .sort((a, b) => a.elapsedMs - b.elapsedMs)[0];
+    }
+
+    function bestRecordForDifficulty(difficulty) {
+      return state.records
+        .filter((record) => record.difficulty === difficulty)
+        .sort((a, b) => a.elapsedMs - b.elapsedMs)[0];
+    }
+
+    function advanceProgress(level) {
+      state.progress[level.difficulty] = level.number >= LEVELS_PER_DIFFICULTY ? 1 : level.number + 1;
+      writeJson(PROGRESS_KEY, state.progress);
     }
 
     function selectDifficulty(difficulty) {
@@ -907,73 +1390,88 @@
       render();
     }
 
-    function startGame() {
-      const levelIndex = LEVELS.findIndex((level) => level.difficulty === state.selectedDifficulty);
+    function startGame(levelNumber = currentProgressNumber(state.selectedDifficulty)) {
+      clearCountdown();
+      stopTimer();
+
+      const levelIndex = levelIndexFor(state.selectedDifficulty, levelNumber);
       state.levelIndex = levelIndex >= 0 ? levelIndex : 0;
-      state.screen = "game";
       state.path = [];
-      state.message = "Toca el número 1 para empezar.";
-      state.hintKey = null;
       state.errors = 0;
+      state.elapsedMs = 0;
+      state.finishedRecord = null;
+      state.countdownValue = "3";
+      state.screen = "countdown";
+      render();
+      runCountdown();
+    }
+
+    function runCountdown() {
+      const values = ["3", "2", "1", "Ya"];
+      let index = 0;
+
+      const tick = () => {
+        state.countdownValue = values[index];
+        el.countdownValue.textContent = state.countdownValue;
+        index += 1;
+
+        if (index < values.length) {
+          countdownTimer = setTimeout(tick, 800);
+        } else {
+          countdownTimer = setTimeout(() => {
+            countdownTimer = null;
+            state.screen = "game";
+            render();
+            startTimer();
+          }, 520);
+        }
+      };
+
+      tick();
+    }
+
+    function goHome() {
+      clearCountdown();
+      stopTimer();
+      state.path = [];
+      state.screen = "home";
       render();
     }
 
-    function resetLevel() {
-      state.path = [];
-      state.message = "Toca el número 1 para empezar.";
-      state.hintKey = null;
-      state.errors = 0;
-      render();
+    function startNextGame() {
+      const level = getLevel();
+      state.selectedDifficulty = level.difficulty;
+      startGame(currentProgressNumber(level.difficulty));
     }
 
     function undo() {
-      if (state.path.length === 0) return;
+      if (state.path.length === 0) return false;
       state.path = state.path.slice(0, -1);
-      state.message = "Último movimiento deshecho.";
-      state.hintKey = null;
       render();
+      return true;
     }
 
-    function nextLevel() {
-      state.levelIndex = (state.levelIndex + 1) % LEVELS.length;
-      state.path = [];
-      state.message = "Nuevo tablero. Empieza por el número 1.";
-      state.hintKey = null;
-      state.errors = 0;
-      render();
-    }
-
-    function showHint() {
-      const level = getLevel();
-      const totalCells = level.size * level.size;
-      if (state.path.length === totalCells) return;
-
-      const followsGuide = state.path.every((cell, index) => sameCell(cell, level.solution[index]));
-      if (!followsGuide) {
-        state.message = "Tu ruta se desvió del camino guía. Retrocede o reinicia para usar pista.";
-        state.hintKey = null;
-        render();
-        return;
-      }
-
-      const nextCell = level.solution[state.path.length];
-      if (nextCell) {
-        state.hintKey = keyOf(nextCell);
-        state.message = "Pista marcada: esa casilla mantiene una solución válida.";
-        render();
-      }
-    }
-
-    function registerError(text) {
+    function registerError() {
       state.errors += 1;
-      state.message = text;
-      state.hintKey = null;
+      render();
+      return false;
+    }
+
+    function finishGame() {
+      const level = getLevel();
+      stopTimer();
+      const record = saveTimeRecord(level, state.elapsedMs);
+      state.finishedRecord = record;
+      advanceProgress(level);
+      state.screen = "win";
       render();
     }
 
     function handleCellClick(cell) {
+      if (state.screen !== "game") return false;
+
       const level = getLevel();
-      if (isSolved(level)) return;
+      if (isSolved(level) || isWall(cell, level)) return false;
 
       const checkpoints = checkpointByKey(level);
       const orders = orderByKey();
@@ -984,56 +1482,28 @@
       const alreadyVisited = orders.has(cellKey);
 
       if (state.path.length === 0) {
-        if (checkpointLabel !== 1) {
-          registerError("Debes comenzar en el número 1. Sin atajos, Señor Gallardo.");
-          return;
-        }
+        if (checkpointLabel !== 1) return registerError();
         state.path = [cell];
-        state.message = "Bien. Ahora construye una ruta continua hacia el siguiente número.";
-        state.hintKey = null;
         render();
-        return;
+        return true;
       }
 
-      if (previous && sameCell(cell, previous)) {
-        undo();
-        return;
-      }
-
-      if (sameCell(cell, last)) return;
-
-      if (alreadyVisited) {
-        registerError("No puedes cruzar una casilla ya usada. La ruta debe ser única.");
-        return;
-      }
-
-      if (!isAdjacent(last, cell)) {
-        registerError("Movimiento inválido: solo puedes avanzar a una casilla vecina.");
-        return;
-      }
+      if (previous && sameCell(cell, previous)) return undo();
+      if (sameCell(cell, last)) return true;
+      if (alreadyVisited || !isAdjacent(last, cell)) return registerError();
 
       const reached = reachedCheckpoints(level);
-      if (checkpointLabel && checkpointLabel !== reached + 1) {
-        registerError(`Ese número no toca todavía. El siguiente objetivo es el ${reached + 1}.`);
-        return;
-      }
+      if (checkpointLabel && checkpointLabel !== reached + 1) return registerError();
 
-      const totalCells = level.size * level.size;
-      const remaining = totalCells - state.path.length;
       state.path = [...state.path, cell];
-      state.hintKey = null;
 
-      const nextReached = checkpointLabel ? checkpointLabel : reached;
-      if (state.path.length === totalCells && nextReached === level.checkpoints.length) {
-        state.message = "Tablero resuelto. Camino completo, números en orden y sin casillas libres.";
-      } else if (checkpointLabel) {
-        state.message = `Correcto: llegaste al ${checkpointLabel}. Ahora busca el ${checkpointLabel + 1}.`;
-      } else if (remaining - 1 <= 3) {
-        state.message = "Cuidado con el cierre: no dejes una isla imposible de completar.";
+      if (isSolved(level)) {
+        finishGame();
       } else {
-        state.message = "Sigue. El tablero castiga la improvisación más que el error.";
+        render();
       }
-      render();
+
+      return true;
     }
 
     function cellFromElement(element) {
@@ -1078,15 +1548,17 @@
       drawing.lastKey = targetKey;
 
       for (const cell of cellsToTrace(target)) {
-        const errorsBefore = state.errors;
-        handleCellClick(cell);
-        if (state.errors > errorsBefore) break;
+        if (!handleCellClick(cell)) break;
+        if (state.screen !== "game") break;
       }
     }
 
     function startDrawing(event) {
+      if (state.screen !== "game") return;
       if (event.button !== undefined && event.button !== 0) return;
-      if (!cellFromPointer(event)) return;
+
+      const firstCell = cellFromPointer(event);
+      if (!firstCell || isWall(firstCell, getLevel())) return;
 
       event.preventDefault();
       drawing.active = true;
@@ -1124,6 +1596,7 @@
 
     function renderBoard(level) {
       const checkpoints = checkpointByKey(level);
+      const walls = wallByKey(level);
       const orders = orderByKey();
       el.board.style.setProperty("--size", level.size);
       el.board.innerHTML = `
@@ -1138,19 +1611,21 @@
           const cellKey = keyOf(cell);
           const checkpoint = checkpoints.get(cellKey);
           const order = orders.get(cellKey);
+          const wall = walls.has(cellKey);
           const isCurrent = state.path.length > 0 && sameCell(state.path[state.path.length - 1], cell);
           const button = document.createElement("button");
           button.type = "button";
           button.className = [
             "cell",
+            wall ? "wall" : "",
             order ? "visited" : "",
             checkpoint ? "checkpoint" : "",
-            isCurrent ? "current" : "",
-            state.hintKey === cellKey ? "hint" : ""
+            isCurrent ? "current" : ""
           ].filter(Boolean).join(" ");
-          button.setAttribute("aria-label", `Fila ${r + 1}, columna ${c + 1}`);
+          button.setAttribute("aria-label", wall ? `Muro en fila ${r + 1}, columna ${c + 1}` : `Fila ${r + 1}, columna ${c + 1}`);
           button.dataset.row = String(r);
           button.dataset.col = String(c);
+          button.disabled = wall || state.screen !== "game";
           button.textContent = checkpoint ? String(checkpoint) : "";
 
           button.addEventListener("keydown", (event) => {
@@ -1190,12 +1665,54 @@
       line.setAttribute("points", points.join(" "));
     }
 
+    function renderHud(level) {
+      el.levelChip.textContent = `Partida ${level.number}/${LEVELS_PER_DIFFICULTY} - ${level.difficulty}`;
+      renderTimer();
+    }
+
+    function renderHomeRecord() {
+      const best = bestRecordForDifficulty(state.selectedDifficulty);
+      const nextNumber = currentProgressNumber(state.selectedDifficulty);
+      el.homeRecord.textContent = best
+        ? `Mejor ${state.selectedDifficulty}: ${formatTime(best.elapsedMs)} - sigue partida ${nextNumber}/20`
+        : `20 partidas listas - próxima partida ${nextNumber}/20`;
+    }
+
+    function renderWin() {
+      const level = getLevel();
+      const record = state.finishedRecord;
+      const best = bestRecordFor(level);
+      const recent = state.records
+        .filter((item) => item.difficulty === level.difficulty)
+        .slice(0, 5);
+
+      el.winCopy.textContent = `${level.difficulty} - Partida ${level.number}/20`;
+      el.finalTime.textContent = formatTime(record?.elapsedMs || state.elapsedMs);
+      el.bestTime.textContent = best
+        ? `Mejor tiempo de esta partida: ${formatTime(best.elapsedMs)}`
+        : "Primer registro guardado para esta partida.";
+      el.recordList.innerHTML = "";
+
+      recent.forEach((item) => {
+        const row = document.createElement("div");
+        row.className = "record-row";
+        row.innerHTML = `<span>${item.difficulty} ${item.levelNumber}/20</span><span>${formatTime(item.elapsedMs)}</span>`;
+        el.recordList.appendChild(row);
+      });
+    }
+
     function render() {
       const level = getLevel();
+      const isHome = state.screen === "home";
+      const isCountdown = state.screen === "countdown";
       const isGame = state.screen === "game";
+      const isWin = state.screen === "win";
 
-      el.homeScreen.hidden = isGame;
-      el.gameScreen.hidden = !isGame;
+      el.homeScreen.hidden = !isHome;
+      el.gameScreen.hidden = !(isGame || isCountdown);
+      el.winScreen.hidden = !isWin;
+      el.countdownOverlay.hidden = !isCountdown;
+      el.countdownValue.textContent = state.countdownValue;
 
       el.difficultyButtons.forEach((button) => {
         const active = button.dataset.difficulty === state.selectedDifficulty;
@@ -1203,13 +1720,20 @@
         button.setAttribute("aria-pressed", String(active));
       });
 
-      if (isGame) renderBoard(level);
+      if (isHome) renderHomeRecord();
+      if (isGame || isCountdown) {
+        renderHud(level);
+        renderBoard(level);
+      }
+      if (isWin) renderWin();
     }
 
     el.difficultyButtons.forEach((button) => {
       button.addEventListener("click", () => selectDifficulty(button.dataset.difficulty));
     });
-    el.playButton.addEventListener("click", startGame);
+    el.playButton.addEventListener("click", () => startGame());
+    el.homeButton.addEventListener("click", goHome);
+    el.nextGameButton.addEventListener("click", startNextGame);
 
     if (window.PointerEvent) {
       el.board.addEventListener("pointerdown", startDrawing);
@@ -1219,7 +1743,7 @@
     }
 
     const requestedDifficulty = new URLSearchParams(window.location.search).get("play");
-    if (requestedDifficulty && LEVELS.some((level) => level.difficulty === requestedDifficulty)) {
+    if (requestedDifficulty && DIFFICULTIES.includes(requestedDifficulty)) {
       state.selectedDifficulty = requestedDifficulty;
       startGame();
     } else {
