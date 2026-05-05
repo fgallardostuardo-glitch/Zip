@@ -690,9 +690,9 @@
 
     .game-hud {
       width: min(100%, 354px);
-      display: flex;
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
       align-items: center;
-      justify-content: space-between;
       gap: 10px;
     }
 
@@ -712,10 +712,34 @@
       white-space: nowrap;
     }
 
+    .level-chip {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
     .timer-chip {
       min-width: 88px;
       color: var(--ink);
       font-variant-numeric: tabular-nums;
+    }
+
+    .game-home-button {
+      min-height: 36px;
+      border: 1px solid rgba(33, 25, 20, 0.08);
+      border-radius: 999px;
+      background: #f7f3ee;
+      color: var(--muted);
+      box-shadow: 0 10px 24px rgba(33, 25, 20, 0.08);
+      padding: 0 13px;
+      font-size: 13px;
+      font-weight: 950;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .game-home-button:active {
+      transform: translateY(1px);
     }
 
     .game-screen .board {
@@ -840,6 +864,107 @@
       font-variant-numeric: tabular-nums;
     }
 
+    .success-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 11;
+      display: grid;
+      place-items: center;
+      background: rgba(255, 255, 255, 0.42);
+      backdrop-filter: blur(4px);
+      animation: overlayFade 220ms ease both;
+    }
+
+    .success-card {
+      position: relative;
+      width: 210px;
+      min-height: 210px;
+      display: grid;
+      place-items: center;
+      gap: 8px;
+      border-radius: 38px;
+      background: #ffffff;
+      box-shadow: var(--shadow);
+      padding: 24px;
+      text-align: center;
+      animation: successPop 760ms cubic-bezier(0.2, 1.35, 0.35, 1) both;
+    }
+
+    .success-mark {
+      position: relative;
+      width: 82px;
+      height: 82px;
+      border-radius: 50%;
+      background: var(--orange);
+      box-shadow: 0 12px 28px rgba(244, 81, 30, 0.24);
+    }
+
+    .success-mark::after {
+      content: "";
+      position: absolute;
+      left: 24px;
+      top: 18px;
+      width: 24px;
+      height: 38px;
+      border-right: 8px solid #ffffff;
+      border-bottom: 8px solid #ffffff;
+      border-radius: 4px;
+      transform: rotate(42deg);
+    }
+
+    .success-title {
+      color: var(--ink);
+      font-size: 20px;
+      font-weight: 950;
+    }
+
+    .success-time {
+      color: var(--orange);
+      font-size: 26px;
+      font-weight: 950;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .success-spark {
+      position: absolute;
+      width: 9px;
+      height: 18px;
+      border-radius: 999px;
+      background: var(--orange);
+      opacity: 0;
+      animation: sparkRise 900ms ease-out forwards;
+    }
+
+    .success-spark:nth-child(1) {
+      left: 36px;
+      top: 44px;
+      animation-delay: 80ms;
+      transform: rotate(-28deg);
+    }
+
+    .success-spark:nth-child(2) {
+      right: 34px;
+      top: 48px;
+      animation-delay: 130ms;
+      transform: rotate(24deg);
+    }
+
+    .success-spark:nth-child(3) {
+      left: 58px;
+      bottom: 42px;
+      animation-delay: 180ms;
+      background: #f7a24d;
+      transform: rotate(34deg);
+    }
+
+    .success-spark:nth-child(4) {
+      right: 56px;
+      bottom: 44px;
+      animation-delay: 230ms;
+      background: #f7a24d;
+      transform: rotate(-34deg);
+    }
+
     .win-screen {
       min-height: calc(100dvh - 36px);
       display: grid;
@@ -856,6 +981,7 @@
       box-shadow: var(--shadow);
       padding: 28px 22px 22px;
       text-align: center;
+      animation: winEnter 460ms ease both;
     }
 
     .win-title {
@@ -933,6 +1059,51 @@
     .secondary-button:active {
       transform: translateY(1px);
     }
+
+    @keyframes overlayFade {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes successPop {
+      0% {
+        opacity: 0;
+        transform: translateY(12px) scale(0.84);
+      }
+      58% {
+        opacity: 1;
+        transform: translateY(0) scale(1.04);
+      }
+      100% {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    @keyframes sparkRise {
+      0% {
+        opacity: 0;
+        transform: translateY(12px) scale(0.7);
+      }
+      35% {
+        opacity: 1;
+      }
+      100% {
+        opacity: 0;
+        transform: translateY(-24px) scale(1);
+      }
+    }
+
+    @keyframes winEnter {
+      from {
+        opacity: 0;
+        transform: translateY(18px) scale(0.98);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
   </style>
 </head>
 <body>
@@ -956,7 +1127,8 @@
 
     <section class="screen game-screen" id="gameScreen" aria-label="Juego" hidden>
       <div class="game-hud" aria-label="Progreso">
-        <div class="hud-chip" id="levelChip">Partida 1/20</div>
+        <button class="game-home-button" id="gameHomeButton" type="button">Inicio</button>
+        <div class="hud-chip level-chip" id="levelChip">Partida 1/20</div>
         <div class="hud-chip timer-chip" id="timerDisplay">00:00.0</div>
       </div>
       <main class="panel board-panel">
@@ -983,6 +1155,18 @@
 
   <div class="countdown-overlay" id="countdownOverlay" hidden>
     <div class="countdown-card" id="countdownValue" aria-live="assertive">3</div>
+  </div>
+
+  <div class="success-overlay" id="successOverlay" hidden>
+    <div class="success-card" aria-live="polite">
+      <span class="success-spark"></span>
+      <span class="success-spark"></span>
+      <span class="success-spark"></span>
+      <span class="success-spark"></span>
+      <div class="success-mark" aria-hidden="true"></div>
+      <div class="success-title">Ruta completa</div>
+      <div class="success-time" id="successTime">00:00.0</div>
+    </div>
   </div>
 
   <script>
@@ -1236,6 +1420,7 @@
 
     let countdownTimer = null;
     let timerInterval = null;
+    let successTimer = null;
 
     const el = {
       homeScreen: document.getElementById("homeScreen"),
@@ -1247,11 +1432,14 @@
       timerDisplay: document.getElementById("timerDisplay"),
       countdownOverlay: document.getElementById("countdownOverlay"),
       countdownValue: document.getElementById("countdownValue"),
+      successOverlay: document.getElementById("successOverlay"),
+      successTime: document.getElementById("successTime"),
       finalTime: document.getElementById("finalTime"),
       bestTime: document.getElementById("bestTime"),
       winCopy: document.getElementById("winCopy"),
       recordList: document.getElementById("recordList"),
       playButton: document.getElementById("playButton"),
+      gameHomeButton: document.getElementById("gameHomeButton"),
       homeButton: document.getElementById("homeButton"),
       nextGameButton: document.getElementById("nextGameButton"),
       difficultyButtons: Array.from(document.querySelectorAll("[data-difficulty]"))
@@ -1329,6 +1517,13 @@
       }
     }
 
+    function clearSuccessDelay() {
+      if (successTimer) {
+        clearTimeout(successTimer);
+        successTimer = null;
+      }
+    }
+
     function stopTimer() {
       if (state.startedAt !== null) {
         state.elapsedMs = performance.now() - state.startedAt;
@@ -1394,6 +1589,7 @@
 
     function startGame(levelNumber = currentProgressNumber(state.selectedDifficulty)) {
       clearCountdown();
+      clearSuccessDelay();
       stopTimer();
 
       const levelIndex = levelIndexFor(state.selectedDifficulty, levelNumber);
@@ -1434,6 +1630,7 @@
 
     function goHome() {
       clearCountdown();
+      clearSuccessDelay();
       stopTimer();
       state.path = [];
       state.screen = "home";
@@ -1453,10 +1650,49 @@
       return true;
     }
 
+    function trimPathTo(cellKey) {
+      const index = state.path.findIndex((cell) => keyOf(cell) === cellKey);
+      if (index < 0 || index === state.path.length - 1) return true;
+
+      state.path = state.path.slice(0, index + 1);
+      render();
+      return true;
+    }
+
     function registerError() {
       state.errors += 1;
       render();
       return false;
+    }
+
+    function playSuccessSound() {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContext) return;
+
+      try {
+        const context = new AudioContext();
+        const notes = [523.25, 659.25, 783.99, 1046.5];
+        const startAt = context.currentTime;
+
+        notes.forEach((frequency, index) => {
+          const oscillator = context.createOscillator();
+          const gain = context.createGain();
+          const noteStart = startAt + index * 0.085;
+
+          oscillator.type = "sine";
+          oscillator.frequency.setValueAtTime(frequency, noteStart);
+          gain.gain.setValueAtTime(0.0001, noteStart);
+          gain.gain.exponentialRampToValueAtTime(0.13, noteStart + 0.018);
+          gain.gain.exponentialRampToValueAtTime(0.0001, noteStart + 0.22);
+
+          oscillator.connect(gain);
+          gain.connect(context.destination);
+          oscillator.start(noteStart);
+          oscillator.stop(noteStart + 0.24);
+        });
+
+        setTimeout(() => context.close().catch(() => {}), 900);
+      } catch {}
     }
 
     function finishGame() {
@@ -1465,8 +1701,16 @@
       const record = saveTimeRecord(level, state.elapsedMs);
       state.finishedRecord = record;
       advanceProgress(level);
-      state.screen = "win";
+      state.screen = "success";
       render();
+      playSuccessSound();
+
+      clearSuccessDelay();
+      successTimer = setTimeout(() => {
+        successTimer = null;
+        state.screen = "win";
+        render();
+      }, 1650);
     }
 
     function handleCellClick(cell) {
@@ -1480,7 +1724,6 @@
       const cellKey = keyOf(cell);
       const checkpointLabel = checkpoints.get(cellKey);
       const last = state.path[state.path.length - 1];
-      const previous = state.path[state.path.length - 2];
       const alreadyVisited = orders.has(cellKey);
 
       if (state.path.length === 0) {
@@ -1490,9 +1733,9 @@
         return true;
       }
 
-      if (previous && sameCell(cell, previous)) return undo();
       if (sameCell(cell, last)) return true;
-      if (alreadyVisited || !isAdjacent(last, cell) || hasWallBetween(last, cell, level)) return registerError();
+      if (alreadyVisited) return trimPathTo(cellKey);
+      if (!isAdjacent(last, cell) || hasWallBetween(last, cell, level)) return registerError();
 
       const reached = reachedCheckpoints(level);
       if (checkpointLabel && checkpointLabel !== reached + 1) return registerError();
@@ -1747,13 +1990,16 @@
       const isHome = state.screen === "home";
       const isCountdown = state.screen === "countdown";
       const isGame = state.screen === "game";
+      const isSuccess = state.screen === "success";
       const isWin = state.screen === "win";
 
       el.homeScreen.hidden = !isHome;
-      el.gameScreen.hidden = !(isGame || isCountdown);
+      el.gameScreen.hidden = !(isGame || isCountdown || isSuccess);
       el.winScreen.hidden = !isWin;
       el.countdownOverlay.hidden = !isCountdown;
+      el.successOverlay.hidden = !isSuccess;
       el.countdownValue.textContent = state.countdownValue;
+      el.successTime.textContent = formatTime(state.finishedRecord?.elapsedMs || state.elapsedMs);
 
       el.difficultyButtons.forEach((button) => {
         const active = button.dataset.difficulty === state.selectedDifficulty;
@@ -1762,7 +2008,7 @@
       });
 
       if (isHome) renderHomeRecord();
-      if (isGame || isCountdown) {
+      if (isGame || isCountdown || isSuccess) {
         renderHud(level);
         renderBoard(level);
       }
@@ -1773,6 +2019,7 @@
       button.addEventListener("click", () => selectDifficulty(button.dataset.difficulty));
     });
     el.playButton.addEventListener("click", () => startGame());
+    el.gameHomeButton.addEventListener("click", goHome);
     el.homeButton.addEventListener("click", goHome);
     el.nextGameButton.addEventListener("click", startNextGame);
 
